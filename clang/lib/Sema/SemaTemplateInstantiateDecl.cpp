@@ -1627,10 +1627,10 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   // specialization causes the implicit instantiation of the declarations, but
   // not the definitions of scoped member enumerations.
   //
-  // DR1484 clarifies that enumeration definitions inside of a template
+  // DR1484 clarifies that enumeration definitions inside a template
   // declaration aren't considered entities that can be separately instantiated
-  // from the rest of the entity they are declared inside of.
-  if (isDeclWithinFunction(D) ? D == Def : Def && !Enum->isScoped()) {
+  // from the rest of the entity they are declared inside.
+  if (D == Def && (isDeclWithinFunction(D) || !Enum->isScoped())) {
     SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Enum);
     InstantiateEnumDefinition(Enum, Def);
   }
