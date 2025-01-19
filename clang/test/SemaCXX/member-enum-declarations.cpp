@@ -50,9 +50,17 @@ static_assert(static_cast<int>(S2<char>::E::X) == 1);
 template <typename T>
 struct S3 {
   enum class E : T;
-  enum class E : T { X = 0x7FFFFF00 }; // expected-warning {{implicit conversion from 'int' to 'char' changes value}} expected-error {{cannot be narrowed to type 'char'}}
+  enum class E : T { X = 0x7FFFFF00 }; // expected-error {{cannot be narrowed to type 'char'}}
 };
 template struct S3<char>; // expected-note {{in instantiation of template class}}
+
+template <typename T>
+T f1() {
+  enum class E : T { X_F1, Y_F1, Z_F1 };
+  return X_F1;  // expected-error {{use of undeclared identifier 'X_F1'}}
+}
+
+const int resf1 = f1<int>();
 
 }
 
@@ -99,8 +107,20 @@ static_assert(static_cast<int>(S2<char>::E::X) == 1, "");
 template <typename T>
 struct S3 {
   enum E : T;
-  enum E : T { X = 0x7FFFFF00 }; // expected-warning {{implicit conversion from 'int' to 'char' changes value}} expected-error {{cannot be narrowed to type 'char'}}
+  enum E : T { X = 0x7FFFFF00 }; // expected-error {{cannot be narrowed to type 'char'}}
 };
 template struct S3<char>; // expected-note {{in instantiation of template class}}
 
+template <typename T>
+T f1() {
+  enum E : T { X_F2, Y_F2, Z_F2 };
+  return X_F2;
 }
+
+const int resf1 = f1<int>();
+
+}
+
+
+
+
