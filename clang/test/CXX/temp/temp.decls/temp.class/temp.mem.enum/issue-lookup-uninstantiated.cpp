@@ -54,3 +54,15 @@ enum S3<T>::E : T {
 
 auto x3 = S3_X; // expected-error {{'S3_X' is ambiguous}}
 auto y3 = S3<int>::S3_Y;
+
+// FIXME: causes a crash
+
+template <typename T>
+struct S4 {
+  enum E : T;
+};
+
+template <typename T>
+enum S4<T>::E : T { S4_X };
+
+auto x = S4_X;
