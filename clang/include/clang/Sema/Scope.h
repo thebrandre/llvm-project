@@ -343,7 +343,9 @@ public:
 
   bool decl_empty() const { return DeclsInScope.empty(); }
 
+  void AddDeclDebug(Decl *D) const;
   void AddDecl(Decl *D) {
+    AddDeclDebug(D);
     if (auto *VD = dyn_cast<VarDecl>(D))
       if (!isa<ParmVarDecl>(VD))
         ReturnSlots.insert(VD);
@@ -351,6 +353,7 @@ public:
     DeclsInScope.insert(D);
   }
 
+  void RemoveDeclDebug(Decl *D) const;
   void RemoveDecl(Decl *D) { DeclsInScope.erase(D); }
 
   void incrementMSManglingNumber() {

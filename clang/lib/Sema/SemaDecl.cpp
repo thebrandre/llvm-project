@@ -62,6 +62,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/TargetParser/Triple.h"
 #include <algorithm>
@@ -1513,8 +1514,15 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   // Move up the scope chain until we find the nearest enclosing
   // non-transparent context. The declaration will be introduced into this
   // scope.
-  while (S->getEntity() && S->getEntity()->isTransparentContext())
+
+  assert(D);
+  while (S->getEntity() && S->getEntity()->isTransparentContext()) {
+    llvm::errs() << llvm::formatv(
+        "PushOnScopeChains for {0} at {1}: but scope {2} with flags {3:x} is "
+        "transparent. Trying parent {4} instead\n",
+        D->getName(), D, S, S->getFlags(), S->getParent());
     S = S->getParent();
+  }
 
   // Add scoped declarations into their context, so that they can be
   // found later. Declarations without a context won't be inserted
@@ -20103,9 +20111,23 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
   EnumConstantDecl *LastEnumConst =
     cast_or_null<EnumConstantDecl>(lastEnumConst);
 
+  Scope *InitialScope = S;
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
   S = getNonFieldDeclScope(S);
+  if (S == InitialScope) {
+    llvm::errs() << llvm::formatv(
+        "ActOnEnumConstant {0} to scope {1} with flags {2:x}\n",
+        TheEnumDecl->getName(), S, S->getFlags());
+  } else {
+    llvm::errs() << llvm::formatv(
+                        "ActOnEnumConstant {0} to scope {1} with flags {2:x}",
+                        TheEnumDecl->getName(), S, S->getFlags())
+                 << llvm::formatv(" because {0} with flags {1:x} and parent {2} "
+                                  "was not good enough.\n",
+                                  InitialScope, InitialScope->getFlags(),
+                                  InitialScope->getParent());
+  }
 
   // Verify that there isn't already something declared with this name in this
   // scope.

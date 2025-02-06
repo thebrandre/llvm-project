@@ -13,6 +13,7 @@
 
 #include "clang/Sema/Scope.h"
 #include "clang/AST/Decl.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -194,6 +195,32 @@ void Scope::applyNRVO() {
 }
 
 LLVM_DUMP_METHOD void Scope::dump() const { dumpImpl(llvm::errs()); }
+
+void Scope::AddDeclDebug(Decl *D) const {
+  const auto *ND = llvm::dyn_cast<NamedDecl>(D);
+  const std::string DeclName = ND != nullptr ? ND->getNameAsString() : "";
+  if (getParent() == nullptr) {
+    llvm::errs() << llvm::formatv(
+        "Add Decl {0} at {1} to top-level scope at {2}\n", DeclName, D, this);
+  } else {
+    llvm::errs() << llvm::formatv(
+        "Add Decl {0} at {1} to scope at {2} with flags {3:x}\n", DeclName, D,
+        this, getFlags());
+  }
+}
+
+void Scope::RemoveDeclDebug(Decl *D) const {
+  const auto *ND = llvm::dyn_cast<NamedDecl>(D);
+  const std::string DeclName = ND != nullptr ? ND->getNameAsString() : "";
+  if (getParent() == nullptr) {
+    llvm::errs() << llvm::formatv(
+        "Remove Decl {0} at {1} from top-level scope at {2}\n", DeclName, D, this);
+  } else {
+    llvm::errs() << llvm::formatv(
+        "Remove Decl {0} at {1} from scope at {2} with flags {3:x}\n", DeclName, D,
+        this, getFlags());
+  }
+}
 
 void Scope::dumpImpl(raw_ostream &OS) const {
   unsigned Flags = getFlags();

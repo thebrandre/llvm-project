@@ -24,6 +24,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaCodeCompletion.h"
 #include "llvm/ADT/STLForwardCompat.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TimeProfiler.h"
 using namespace clang;
@@ -425,10 +426,32 @@ void Parser::EnterScope(unsigned ScopeFlags) {
   } else {
     Actions.CurScope = new Scope(getCurScope(), ScopeFlags, Diags);
   }
+
+  llvm::errs() << llvm::formatv("Enter scope at {0}\n", Actions.CurScope);
+  Actions.CurScope->dump();
 }
 
 void Parser::ExitScope() {
   assert(getCurScope() && "Scope imbalance!");
+  Scope *S = getCurScope();
+  llvm::errs() << llvm::formatv("Exit Scope at {0}", S);
+  if (DeclContext *CorrespondingEntity = S->getEntity()) {
+    llvm::errs() << llvm::formatv(
+        ", which has a corresponding entity of kind {0} ({1})",
+        CorrespondingEntity->getDeclKindName(),
+        CorrespondingEntity->getDeclKind());
+    if (TagDecl *T = dyn_cast<TagDecl>(CorrespondingEntity))
+      llvm::errs() << llvm::formatv(", TagDecl {0}",
+                                    T->getName());
+    else if (FunctionDecl *F = dyn_cast<FunctionDecl>(CorrespondingEntity))
+      llvm::errs() << llvm::formatv(", FunctionDecl {0}",
+                                    F->getName());
+    else if (NamedDecl *N = dyn_cast<NamedDecl>(CorrespondingEntity))
+      llvm::errs() << llvm::formatv(
+          ", NamedDecl {0}.",
+          N->getName());
+  }
+  llvm::errs() << ".\n";
 
   // Inform the actions module that this scope is going away if there are any
   // decls in it.
