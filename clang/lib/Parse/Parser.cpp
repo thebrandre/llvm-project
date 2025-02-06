@@ -22,6 +22,7 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/SemaCodeCompletion.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TimeProfiler.h"
 using namespace clang;
@@ -422,15 +423,20 @@ void Parser::EnterScope(unsigned ScopeFlags) {
     Scope *N = ScopeCache[--NumCachedScopes];
     N->Init(getCurScope(), ScopeFlags);
     Actions.CurScope = N;
+    llvm::errs() << llvm::formatv("Enter existing Scope at {0}\n",
+                                  Actions.CurScope);
   } else {
     Actions.CurScope = new Scope(getCurScope(), ScopeFlags, Diags);
+    llvm::errs() << llvm::formatv("Enter new Scope at {0}\n",
+                              Actions.CurScope);
+    Actions.CurScope->dump();
   }
 }
 
 /// ExitScope - Pop a scope off the scope stack.
 void Parser::ExitScope() {
   assert(getCurScope() && "Scope imbalance!");
-
+  llvm::errs() << llvm::formatv("Exit Scope at {0}\n", Actions.CurScope);
   // Inform the actions module that this scope is going away if there are any
   // decls in it.
   Actions.ActOnPopScope(Tok.getLocation(), getCurScope());
