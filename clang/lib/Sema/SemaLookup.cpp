@@ -53,6 +53,9 @@
 
 #include "OpenCLBuiltins.inc"
 
+#include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/FormatVariadic.h"
+
 using namespace clang;
 using namespace sema;
 
@@ -1271,6 +1274,29 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
 
   DeclarationName Name = R.getLookupName();
   Sema::LookupNameKind NameKind = R.getLookupKind();
+
+  auto AtExit = llvm::make_scope_exit([&]() {
+    if (R.empty()) {
+      llvm::errs() << llvm::formatv(
+          "----> Sema::CppLookupName found no results "
+          "for {0} ({1}) in scope {2} with flags {3:x}.\n",
+          Name, NameKind, S, S->getFlags());
+      if (S->getEntity() && dyn_cast<TagDecl>(S->getEntity()))
+        llvm::errs() << llvm::formatv("The associated entity is: {0}\n",
+                                      dyn_cast<TagDecl>(S->getEntity())->
+                                      getName());
+    } else {
+      llvm::errs() << llvm::formatv(
+          "----> Sema::CppLookupName found {0} ({1}) in scope {2} with flags {3:x}.\n",
+          Name, NameKind, S, S->getFlags());
+      if (S->getEntity() && dyn_cast<TagDecl>(S->getEntity()))
+        llvm::errs() << llvm::formatv("The associated entity is: {0}\n",
+                                      dyn_cast<TagDecl>(S->getEntity())->
+                                      getName());
+      R.print(llvm::errs());
+      llvm::errs() << "\n";
+    }
+  });
 
   // If this is the name of an implicitly-declared special member function,
   // go through the scope stack to implicitly declare
