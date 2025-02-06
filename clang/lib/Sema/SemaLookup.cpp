@@ -53,6 +53,9 @@
 
 #include "OpenCLBuiltins.inc"
 
+#include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/FormatVariadic.h"
+
 using namespace clang;
 using namespace sema;
 
@@ -2187,6 +2190,20 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation,
                       bool ForceNoCPlusPlus) {
   DeclarationName Name = R.getLookupName();
   if (!Name) return false;
+
+  auto AtExit = llvm::make_scope_exit([&]() {
+    if (R.empty()) {
+      llvm::errs() << llvm::formatv("----> Sema::LookupName found no results "
+                                    "for {0} in scope {1} with flags {2:x}.\n",
+                                    Name, S, S->getFlags());
+    } else {
+      llvm::errs() << llvm::formatv(
+          "----> Sema::LookupName found {0} in scope {1} with flags {2:x}.\n",
+          Name, S, S->getFlags());
+      R.print(llvm::errs());
+      llvm::errs() << "\n";
+    }
+  });
 
   LookupNameKind NameKind = R.getLookupKind();
 

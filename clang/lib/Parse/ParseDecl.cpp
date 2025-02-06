@@ -35,6 +35,8 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/FormatVariadic.h"
+
 #include <optional>
 
 using namespace clang;
@@ -5677,6 +5679,9 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 ///
 void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
   // Enter the scope of the enum body and start the definition.
+  llvm::errs() << llvm::formatv(
+      "Parser::ParseEnumBody in scope {0} with flags {1:x}.\n", getCurScope(),
+      getCurScope()->getFlags());
   ParseScope EnumScope(this, Scope::DeclScope | Scope::EnumScope);
   Actions.ActOnTagStartDefinition(getCurScope(), EnumDecl);
 
